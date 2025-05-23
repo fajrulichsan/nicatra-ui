@@ -81,8 +81,8 @@ import {
     });
   
     const fetchEmployeeData = async () => {
-        try {
-          const response = await axios.get(`${config.BASE_URL}/users`);
+        try {   const response = await axios.get(`${config.BASE_URL}/users`);
+       
     
           // Jika response status bukan 2xx, lempar error
           if (response.status !== 200) {
@@ -207,7 +207,7 @@ const approveEmployee = async (employeeId) => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text) => {
-            return moment(text).format('YYYY-MM-DD HH:mm'); // Format tanggal dan waktu
+              return moment(text).format('YYYY-MM-DD HH:mm'); // Format tanggal dan waktu
             }
         },      
         {

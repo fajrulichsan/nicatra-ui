@@ -96,7 +96,7 @@ const Navbar = ({
           prefix={<SearchOutlined className="text-gray-400" />} 
           placeholder="Search..." 
           variant="borderless"
-          className="mr-4 w-64 bg-gray-50 rounded-lg"
+          className="mr-4 w-64 bg-gray-50 rounded-lg hidden"
         />
         
         {/* Notifications */}
