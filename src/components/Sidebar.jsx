@@ -1,138 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { AppstoreOutlined, CalendarOutlined, LinkOutlined, MailOutlined } from '@ant-design/icons';
-import { Menu } from 'antd';
-import { useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Layout, Menu } from 'antd';
+import { DashboardOutlined, TeamOutlined } from '@ant-design/icons';
 
-const items = [
-  {
-    key: '/cms/dashboard',
-    icon: <MailOutlined />,
-    label: (
-      <Link to="/cms/dashboard">
-        Dashboard
-      </Link>
-    ),
-  },
-  {
-    key: 'ujian',
-    label: 'Ujian',
-    icon: <AppstoreOutlined />,
-    children: [
-      {
-        key: '/cms/kuis',
-        label: (
-          <Link to="/cms/kuis">
-            Kuis
-          </Link>
-        ),
-      },
-      {
-        key: '/cms/ulangan-harian',
-        label: (
-          <Link to="/cms/ulangan-harian">
-            Ulangan Harian
-          </Link>
-        ),
-      },
-      {
-        key: '/cms/uts-uas',
-        label: (
-          <Link to="/cms/uts-uas">
-            UTS & UAS
-          </Link>
-        ),
-      },
-    ],
-  },
-  {
-    key: 'management-role',
-    label: 'Management Role',
-    icon: <AppstoreOutlined />,
-    children: [
-      {
-        key: '/cms/management-role/admin',
-        label: (
-          <Link to="/cms/management-role/admin">
-            Admin
-          </Link>
-        ),
-      },
-      {
-        key: '/cms/management-role/guru',
-        label: (
-          <Link to="/cms/management-role/guru">
-            Guru
-          </Link>
-        ),
-      },
-      {
-        key: '/cms/management-role/wali-kelas',
-        label: (
-          <Link to="/cms/management-role/wali-kelas">
-            Wali Kelas
-          </Link>
-        ),
-      },
-    ],
-  },
-  {
-    key: '/cms/kelola-siswa',
-    icon: <MailOutlined />,
-    label: 'Kelola Siswa',
-  },
-  {
-    key: '/cms/mata-pelajaran',
-    icon: <MailOutlined />,
-    label: 'Mata Pelajaran',
-  },
-  {
-    key: '/cms/kelas',
-    icon: <MailOutlined />,
-    label: (
-      <Link to="/cms/kelas">
-        Kelas
-      </Link>
-    ),
-  },
-  {
-    key: '/cms/tambah-user',
-    icon: <LinkOutlined />,
-    label: (
-      <Link to="/cms/tambah-user">
-        Tambah User
-      </Link>
-    ),
-  }
-];
+const { Sider } = Layout;
 
-const Sidebar = () => {
-  const location = useLocation();
-  const [selectedKey, setSelectedKey] = useState('/cms/dashboard');
+const Sidebar = ({ collapsed, activeMenu, setActiveMenu }) => {
+  const navigate = useNavigate(); // React Router hook for navigation
 
-  const getFirstTwoPaths = (pathname) => {
-    const paths = pathname.split('/');
-    return `/${paths[1]}/${paths[2]}`;
+  const handleMenuClick = (e) => {
+    setActiveMenu(e.key);
+    navigate(`/${e.key}`); // Navigate using react-router
   };
 
-
   useEffect(() => {
-    const { pathname } = location;
-    const firstTwoPaths = getFirstTwoPaths(pathname);
-  
-    setSelectedKey(firstTwoPaths);
-  }, [location.pathname]);
-
+    const current = window.location.pathname.split('/')[1];
+    console.log(current);
+    setActiveMenu(current || 'dashboard');
+  }, [window.location.pathname]); // dependency changed to pathname for better compatibility
 
   return (
-    <>
+    <Sider trigger={null} collapsible collapsed={collapsed} width={250} className="bg-white shadow-sm" theme="light">
+      <div className="flex items-center justify-center h-16 border-b border-gray-100">
+        {collapsed ? (
+          <div className="text-xl font-bold text-blue-600">NS</div>
+        ) : (
+          <div className="text-xl font-bold text-blue-600">Nicatra System</div>
+        )}
+      </div>
       <Menu
-        style={{ width: "100%" }}
-        selectedKeys={[selectedKey]}
         mode="inline"
-        theme="light"
-        items={items}
+        selectedKeys={[activeMenu]}
+        onClick={handleMenuClick}
+        className="border-r-0"
+        items={[
+          { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
+          { key: 'employees', icon: <TeamOutlined />, label: 'Employees' },
+        ]}
       />
-    </>
+    </Sider>
   );
 };
 
