@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Button, Form, Input, Typography, Steps, message, notification } from 'antd';
+import { Button, Form, Input, Typography, Steps, notification } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, BankOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import config from '../config/config';
+import axios from 'axios';
 
 const { Title, Text, Paragraph } = Typography;
 const { Step } = Steps;
@@ -12,47 +12,40 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
-  const navigate = useNavigate();
 
   // Handle form submission
-  const onFinish = async (values) => {
+  const onFinish = (values) => {
     setLoading(true);
-
+  
     // Debug: Log all form field values
     const allValues = form.getFieldsValue();
-    
+  
     // Remove confirmPassword from submission data
     const { confirmPassword, ...submitData } = allValues;
+  
     // Make API call to /users to register the user
-    try {
-        const response = await fetch(`${config.BASE_URL}/users/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submitData),
-        });
-    
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Registration failed. Please try again.');
-        }
-        
+    axios
+      .post(`${config.BASE_URL}/users/register`, submitData)
+      .then((response) => {
+        // Check if registration was successful
         notification.success({
-            message: 'Registration Successful',
-            description: 'You have successfully registered. Please log in to continue.',
+          message: 'Registration Successful',
+          description: 'You have successfully registered. Please log in to continue.',
         });
         setLoading(false);
-      } catch (error) {
+      })
+      .catch((error) => {
+        // Handle registration failure
         notification.error({
-            message: 'Registration Failed',
-            description: error.message || 'An error occurred during registration. Please try again later.',
+          message: 'Registration Failed',
+          description:
+            error.response?.data?.message || error.message || 'An error occurred during registration. Please try again later.',
         });
         setLoading(false);
         console.error(error);
-      }
+      });
   };
+  
 
   const handleNext = async () => {
     try {

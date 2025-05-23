@@ -24,6 +24,8 @@ import {
   import CmsTemplate from '../components/CmsTemplate';
   import React, { useState, useEffect } from 'react';
   import config from '../config/config';
+  import moment from 'moment';
+  import axios from 'axios';
   
   const { Title, Text } = Typography;
   const { Option } = Select;
@@ -32,14 +34,17 @@ import {
   const renderStatusTag = (status) => {
     let color = '';
     let icon = null;
+    let text = '';
   
     switch(status) {
-      case 'Active':
+      case true:
         color = 'green';
+        text = 'Verified';
         icon = <CheckCircleOutlined />;
         break;
-      case 'Inactive':
+      case false:
         color = 'red';
+        text = 'Unverified';
         icon = <CloseCircleOutlined />;
         break;
       default:
@@ -48,54 +53,20 @@ import {
   
     return (
       <Tag color={color} icon={icon}>
-        {status}
+        {text}
       </Tag>
     );
   };
   
-  // Employee positions for form
-  const positions = [
-    'Software Engineer',
-    'Product Manager',
-    'UX Designer',
-    'Marketing Specialist',
-    'HR Manager',
-    'Finance Manager',
-    'Sales Representative',
-    'Customer Service Representative',
-    'Project Manager',
-    'Data Analyst',
-  ];
-  
   const Employee = () => {
     const [employeeData, setEmployeeData] = useState([]);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [editingEmployee, setEditingEmployee] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState(null);
-    const [form] = Form.useForm();
-    const [editForm] = Form.useForm();
   
-    // Fetch employee data from API
+   
     useEffect(() => {
-        const fetchEmployeeData = async () => {
-          try {
-            const response = await fetch(`${config.BASE_URL}/users`);
-            if (!response.ok) {
-              throw new Error('Failed to fetch employee data');
-            }
-            const data = await response.json();
-
-            setEmployeeData(data.data || []);
-
-          } catch (error) {
-            notification.error(error.message || 'An error occurred while fetching employee data');
-          }
-        };
-    
         fetchEmployeeData();
-      }, []);
+    }, []);
   
     // Filter function for employees
     const filteredEmployees = employeeData.filter(employee => {
@@ -109,107 +80,174 @@ import {
       return matchesSearch && matchesStatus;
     });
   
-    // Handle showing edit employee modal
-    const showEditModal = (employee) => {
-      setEditingEmployee(employee);
-      editForm.setFieldsValue({
-        ...employee,
-        regisDate: employee.regisDate
-      });
-      setIsEditModalVisible(true);
-    };
-  
-    // Handle editing an employee
-    const handleEditEmployee = () => {
-      editForm.validateFields().then(values => {
-        const updatedData = employeeData.map(employee => {
-          if (employee.key === editingEmployee?.key) {
-            return {
-              ...employee,
-              ...values,
-              regisDate: values.regisDate?.format('YYYY-MM-DD') || employee.regisDate,
-            };
+    const fetchEmployeeData = async () => {
+        try {
+          const response = await axios.get(`${config.BASE_URL}/users`);
+    
+          // Jika response status bukan 2xx, lempar error
+          if (response.status !== 200) {
+            throw new Error('Failed to fetch employee data');
           }
-          return employee;
-        });
-  
-        setEmployeeData(updatedData);
-        setIsEditModalVisible(false);
-        message.success('Employee updated successfully');
-      });
-    };
-  
-    // Handle deleting an employee
+    
+          setEmployeeData(response.data.data || []); // Mengambil data dari response.data
+    
+        } catch (error) {
+          notification.error({
+            message: error.message || 'An error occurred while fetching employee data',
+          });
+        }
+      };
+
     const handleDeleteEmployee = (key) => {
-      Modal.confirm({
-        title: 'Are you sure you want to delete this employee?',
-        content: 'This action cannot be undone.',
-        okText: 'Yes',
-        okType: 'danger',
-        cancelText: 'No',
-        onOk() {
-          const updatedData = employeeData.filter(employee => employee.key !== key);
-          setEmployeeData(updatedData);
-          message.success('Employee deleted successfully');
-        },
-      });
-    };
+        console.log('Deleting employee with key:', key); // Debugging line
+        Modal.confirm({
+          title: 'Are you sure you want to delete this employee?',
+          content: 'This action cannot be undone.',
+          okText: 'Yes',
+          okType: 'danger',
+          cancelText: 'No',
+          onOk() {
+            // Mengirimkan request DELETE ke API /users dengan ID karyawan
+            axios
+              .delete(`${config.BASE_URL}/users/${key}`)
+              .then((response) => {
+                if (response.status === 200) {
+                  // Menghapus employee dari local state setelah berhasil dihapus
+                  const updatedData = employeeData.filter(employee => employee.key !== key);
+                  setEmployeeData(updatedData);
+                  notification.success({
+                    message: 'Employee deleted successfully',
+                  });
+                  fetchEmployeeData();
+                }
+              })
+              .catch((error) => {
+                notification.error({
+                  message: 'Failed to delete employee',
+                  description: error.response?.data?.message || error.message,
+                });
+                fetchEmployeeData();
+              });
+          },
+        });
+      };
+
+      
+const approveEmployee = async (employeeId) => {
+    Modal.confirm({
+      title: 'Are you sure you want to approve this employee?',
+      content: 'This action will approve the selected employee.',
+      okText: 'Yes',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          // Perform the API call to approve the employee
+          const response = await axios.patch(`${config.BASE_URL}/users/approve/${employeeId}`);
+  
+          if (response.status === 200) {
+            notification.success({
+                message: 'Employee approved successfully',
+            });
+          } else {
+            notification.error({
+                message: 'Failed to approve employee',
+                description: response.data.message || 'An error occurred while approving the employee.',
+            });
+          }
+        } catch (error) {
+            notification.error({
+                message: 'Failed to approve employee',
+                description: error.response?.data?.message || error.message,
+            });
+          console.error(error);
+        }finally {
+            fetchEmployeeData();
+        }
+      },
+    });
+  };
+  
   
     // Employee table columns
     const columns = [
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        render: (text) => <a>{text}</a>,
-      },
-      {
-        title: 'ID',
-        dataIndex: 'employeeId',
-        key: 'employeeId',
-      },
-      {
-        title: 'Email',
-        dataIndex: 'email',
-        key: 'email',
-      },
-      {
-        title: 'Position',
-        dataIndex: 'position',
-        key: 'position',
-      },
-      {
-        title: 'Status',
-        dataIndex: 'status',
-        key: 'status',
-        render: (status) => renderStatusTag(status),
-      },
-      {
-        title: 'Regis Date',
-        dataIndex: 'regisDate',
-        key: 'regisDate',
-      },
-      {
-        title: 'Action',
-        key: 'action',
-        render: (_, record) => (
-          <Space size="small">
-            <Button 
-              type="text"
-              icon={<EditOutlined />} 
-              size="small"
-              onClick={() => showEditModal(record)}
-            />
-            <Button 
-              type="text" 
-              icon={<DeleteOutlined />} 
-              size="small" 
-              danger
-              onClick={() => handleDeleteEmployee(record.key)}
-            />
-          </Space>
-        ),
-      },
+        {
+            title: 'No',
+            key: 'index',
+            render: (_, __, index) => index + 1,  // Menampilkan nomor urut
+        },
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            key: 'name',
+            render: (text) => <a>{text}</a>,
+        },
+        {
+            title: 'NIPP',
+            dataIndex: 'nipp',
+            key: 'nipp',
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+        },
+        {
+            title: 'Position',
+            dataIndex: 'position',
+            key: 'position',
+        },
+        {
+            title: 'Status',
+            dataIndex: 'isVerified',
+            key: 'isVerified',
+            render: (status) => renderStatusTag(status),
+        },
+        {
+            title: 'Regis Date',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (text) => {
+            return moment(text).format('YYYY-MM-DD HH:mm'); // Format tanggal dan waktu
+            }
+        },      
+        {
+            title: 'Action',
+            key: 'id',
+            align: 'center',
+            render: (_, record) => (
+              <Space size="small">
+                {/* Tampilkan tombol approve hanya jika user belum diverifikasi */}
+                {!record.isVerified && (
+                  <Button
+                    type="text"
+                    icon={<CheckCircleOutlined />}
+                    size="medium"
+                    onClick={() => approveEmployee(record.id)}
+                    style={{
+                      backgroundColor: '#4CAF50', 
+                      color: 'white', 
+                      borderRadius: '10px',
+                    }} // Green background with rounded corners
+                  />
+                )}
+          
+                {/* Tombol delete */}
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  size="medium"
+                  danger
+                  onClick={() => handleDeleteEmployee(record.id)}
+                  style={{
+                    backgroundColor: '#F44336',
+                    color: 'white',
+                    borderRadius: '10px',
+                  }} // Red background with rounded corners
+                />
+              </Space>
+            ),
+          }
+          
     ];
   
     return (
@@ -232,68 +270,6 @@ import {
             rowKey="email"
           />
         </Card>
-  
-        {/* Edit Employee Modal */}
-        <Modal
-          title="Edit Employee"
-          open={isEditModalVisible}
-          onCancel={() => setIsEditModalVisible(false)}
-          footer={[
-            <Button key="cancel" onClick={() => setIsEditModalVisible(false)}>
-              Cancel
-            </Button>,
-            <Button key="submit" type="primary" onClick={handleEditEmployee}>
-              Update Employee
-            </Button>,
-          ]}
-        >
-          <Form
-            form={editForm}
-            layout="vertical"
-          >
-            <Form.Item
-              name="name"
-              label="Name"
-              rules={[{ required: true, message: 'Please input the name!' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, message: 'Please input the email!' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="position"
-              label="Position"
-              rules={[{ required: true, message: 'Please select the position!' }]}
-            >
-              <Select>
-                {positions.map(position => (
-                  <Option key={position} value={position}>{position}</Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: 'Please select the status!' }]}
-            >
-              <Select>
-                <Option value="Active">Active</Option>
-                <Option value="Inactive">Inactive</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="regisDate"
-              label="Regis Date"
-            >
-              <DatePicker />
-            </Form.Item>
-          </Form>
-        </Modal>
       </CmsTemplate>
     );
   };
