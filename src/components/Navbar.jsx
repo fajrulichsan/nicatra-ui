@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layout, Button, Input, Badge, Avatar, Dropdown } from 'antd';
+import React, {useState, useEffect} from 'react';
+import { Layout, Button, Input, Badge, Avatar, Dropdown, notification } from 'antd';
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
@@ -9,7 +9,10 @@ import {
   SettingOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom'; // Using react-router for navigation
+import { useNavigate } from 'react-router-dom'; 
+import axios from 'axios';
+import config from '../config/config'; 
+import { checkAuth } from '../utils/Utils';
 
 const { Header } = Layout;
 
@@ -20,12 +23,38 @@ const Navbar = ({
   markAsRead, 
   unreadCount 
 }) => {
-  const navigate = useNavigate(); // Replaced Next.js router with react-router's useNavigate
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    checkAuth().then(data => {
+      if (!data) {
+        navigate('/');
+      } else {
+        setUser(data);
+        console.log('User data:', data); // Log the user data
+      }
+    });
+  }, []);
+
+  if (!user) return null; 
   
-  // Handle logout
   const handleLogout = () => {
-    // In a real app, we would clear session/token here
-    navigate('/login'); // React Router navigation
+    axios.post(`${config.BASE_URL}/users/logout`, {}, { withCredentials: true })
+      .then(() => {
+        notification.success({
+          message: 'Logout Successful',
+          description: 'You have been logged out.',
+        });
+        navigate('/');
+      })
+      .catch((error) => {
+        notification.error({
+          message: 'Logout Failed',
+          description: error.response?.data?.message || error.message || 'An error occurred during logout.',
+        });
+      });
   };
 
   // Define notification menu
@@ -59,20 +88,6 @@ const Navbar = ({
   const userMenu = {
     items: [
       {
-        key: '1',
-        icon: <UserOutlined />,
-        label: 'Profile',
-      },
-      {
-        key: '2',
-        icon: <SettingOutlined />,
-        label: 'Settings',
-      },
-      {
-        key: '3',
-        type: 'divider',
-      },
-      {
         key: '4',
         icon: <LogoutOutlined />,
         label: 'Logout',
@@ -80,6 +95,17 @@ const Navbar = ({
       },
     ],
   };
+
+  const getInitials = (name) => {
+    if (!name) return '';
+    const namesArray = name.trim().split(' ');
+    if (namesArray.length === 1) {
+      return namesArray[0][0].toUpperCase();
+    } else {
+      return (namesArray[0][0] + namesArray[1][0]).toUpperCase();
+    }
+  }
+  
 
   return (
     <Header className="bg-white px-4 py-0 flex items-center justify-between h-16 shadow-sm">
@@ -109,10 +135,10 @@ const Navbar = ({
         {/* User profile */}
         <Dropdown menu={userMenu} trigger={['click']} placement="bottomRight">
           <div className="flex items-center cursor-pointer">
-            <Avatar className="bg-blue-500">JD</Avatar>
+            <Avatar className="bg-blue-500">{getInitials(user.name)}</Avatar>
             <div className="ml-2 hidden md:block">
-              <div className="text-sm font-medium">John Doe</div>
-              <div className="text-xs text-gray-500">Administrator</div>
+              <div className="text-sm font-medium">{user.name}</div>
+              <div className="text-xs text-gray-500">{user.isAdmin ? 'Super Admin' : 'Admin'}</div>
             </div>
           </div>
         </Dropdown>

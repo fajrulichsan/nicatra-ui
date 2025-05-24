@@ -27,7 +27,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Title level={4} className="mb-0">Dashboard</Title>
-          <Text type="secondary">Welcome back, John Doe</Text>
+          <Text type="secondary">Welcome back</Text>
         </div>
       </div>
       

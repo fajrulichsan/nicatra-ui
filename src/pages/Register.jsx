@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Typography, Steps, notification } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, BankOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import config from '../config/config';
 import axios from 'axios';
+import { checkAuth } from '../utils/Utils';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
 const { Step } = Steps;
@@ -12,6 +14,16 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAuth().then(user => {
+      console.log('User data:', user); // Log the user data
+      if (user) {
+        navigate('/dashboard'); 
+      }
+    });
+  }, []);
 
   // Handle form submission
   const onFinish = (values) => {

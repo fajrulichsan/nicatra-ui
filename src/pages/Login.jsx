@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Typography, notification } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import config from '../config/config';
 import axios from 'axios';
+import { checkAuth } from '../utils/Utils';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAuth().then(user => {
+      console.log('User data:', user); // Log the user data
+      if (user) {
+        navigate('/dashboard'); 
+      }
+    });
+  }, []);
+
 
     const onFinish = (values) => {
         const { email, password } = values;
@@ -15,7 +28,12 @@ const Login = () => {
     
         // Use axios with .then() and .catch()
         axios
-        .post(`${config.BASE_URL}/users/login`, { email, password })
+        .post(`${config.BASE_URL}/users/login`, { email, password }, {
+            withCredentials: true,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
         .then((response) => {
             console.log('Login response:', response.data); // Log the response object
     
@@ -40,7 +58,8 @@ const Login = () => {
             setLoading(false);
         });
     };
-  
+
+
 
   return (
     <div className="flex min-h-screen bg-gray-50">

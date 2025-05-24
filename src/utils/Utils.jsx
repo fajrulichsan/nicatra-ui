@@ -1,27 +1,22 @@
-import { useState } from 'react';
+import config from "../config/config";
 
-const Utils = () => {
-  const localUrl = "http://localhost:3001"
-  const [loading, setLoading] = useState(false);
-  const showLoading = () => {
-    setLoading(true);
-  };
+// utils/auth.js
+export async function checkAuth() {
+  try {
+    const res = await fetch(`${config.BASE_URL}/users/me`, {
+      method: 'GET',
+      credentials: 'include',
+    });
 
-  const hideLoading = () => {
-    setLoading(false);
-  };
+    const data = await res.json();
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    };
-};
-
-  return { loading, setLoading, showLoading, hideLoading, localUrl, getHeaders};
-};
-
-export default Utils;
-
+    if (res.ok && data.acknowledge) {
+      return data.data; // user data
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error('Auth check error:', err);
+    return null;
+  }
+}
