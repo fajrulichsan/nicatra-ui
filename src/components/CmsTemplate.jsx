@@ -2,55 +2,70 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from 'antd';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import axios from 'axios';
+import { useContext } from 'react';
+import { useAppContext } from '../context/AppContext'; // Assuming you have a context to get user data
+import config from '../config/config';
+import { checkAuth } from '../utils/Utils';
+
+
 
 const { Content } = Layout;
 
 // Mock notification data for example
-const notificationData = [
-  {
-    id: 1,
-    title: 'New Task Assigned',
-    description: 'You have been assigned to the Website Redesign project',
-    time: '2 hours ago',
-    read: false,
-  },
-  {
-    id: 2,
-    title: 'Meeting Reminder',
-    description: 'Team meeting starts in 30 minutes',
-    time: '30 minutes ago',
-    read: false,
-  },
-  {
-    id: 3,
-    title: 'System Update',
-    description: 'System will undergo maintenance at 10 PM',
-    time: '1 day ago',
-    read: true,
-  },
-  {
-    id: 4,
-    title: 'New Comment',
-    description: 'Jim commented on your report',
-    time: '2 days ago',
-    read: true,
-  },
-];
 
 const CmsTemplate = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [activeMenu, setActiveMenu] = useState('dashboard');
-  const [notifications, setNotifications] = useState(notificationData);
+  const [notifications, setNotifications] = useState([]);
 
-  // Count unread notifications
+  // Ambil user dari context app
+  const { currentUser, setCurrentUser } = useAppContext();
+
+  useEffect(() => {
+    // Jika user dari context belum ada, coba cek auth dulu
+    if (!currentUser) {
+      checkAuth().then(authUser => {
+        if (authUser) {
+          setCurrentUser(authUser);
+        }
+      });
+    }
+  }, [currentUser, setCurrentUser]);
+
+  useEffect(() => {
+    // Jika user sudah siap, fetch notification
+    if (currentUser && currentUser.sub) {
+      fetchNotifications();
+    }
+  }, [currentUser]);
+
+  const fetchNotifications = async () => {
+    try {
+      console.log('Fetching notifications for user:', currentUser.sub);
+      const response = await axios.get(`${config.BASE_URL}/notifications/${currentUser.sub}`);
+      setNotifications(response.data.data);
+      console.log('Fetched notifications:', response);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  // Hitung unread notifications
   const unreadCount = notifications.filter(item => !item.read).length;
 
-  // Mark notification as read
+  // Fungsi mark as read
   const markAsRead = (id) => {
     const updatedNotifications = notifications.map(item =>
       item.id === id ? { ...item, read: true } : item
     );
     setNotifications(updatedNotifications);
+
+    axios.patch(`${config.BASE_URL}/notifications/read/${id}`)
+    .catch(console.error)
+    .finally(() => {
+      fetchNotifications();
+    })
   };
 
   return (

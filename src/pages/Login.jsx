@@ -5,17 +5,19 @@ import config from '../config/config';
 import axios from 'axios';
 import { checkAuth } from '../utils/Utils';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 
 const { Title, Text } = Typography;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const {setCurrentUser } = useAppContext(); 
 
   useEffect(() => {
     checkAuth().then(user => {
-      console.log('User data:', user); // Log the user data
       if (user) {
+        setCurrentUser(user);
         navigate('/dashboard'); 
       }
     });
@@ -66,11 +68,11 @@ const Login = () => {
       {/* Left side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-blue-600">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/80 to-purple-600/90 z-10" />
-        <img
+        {/* <img
           src="/api/placeholder/1200/800"
           alt="Login Background"
           className="absolute inset-0 object-cover w-full h-full z-0"
-        />
+        /> */}
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white z-20 p-12">
           <div className="max-w-md space-y-6">
             <Title level={1} className="text-white font-bold text-4xl">

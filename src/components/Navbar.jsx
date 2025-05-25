@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { Layout, Button, Input, Badge, Avatar, Dropdown, notification } from 'antd';
+import { Layout, Button, Input, Badge, Avatar, Dropdown, notification, Menu } from 'antd';
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
@@ -38,7 +38,6 @@ const Navbar = ({
       }
     });
 
-    console.log('Current User:', currentUser); // Log the current user data
   }, []);
 
   if (!currentUser) return null; 
@@ -71,20 +70,7 @@ const Navbar = ({
           <div className="text-xs text-gray-400 mt-1">{item.time}</div>
         </div>
       ),
-    })).concat([ // Adding 'view all' notification option
-      {
-        key: 'divider',
-        type: 'divider',
-      },
-      {
-        key: 'all',
-        label: (
-          <div className="text-center">
-            <Button type="link">View All Notifications</Button>
-          </div>
-        ),
-      },
-    ]),
+    }))
   };
 
   // Define user menu
@@ -108,10 +94,40 @@ const Navbar = ({
       return (namesArray[0][0] + namesArray[1][0]).toUpperCase();
     }
   }
+
+
+  // Buat menu notifikasi sebagai komponen agar bisa scroll
+  const renderNotificationMenu = (
+    <div
+      style={{
+        maxHeight: 400,
+        overflowY: 'scroll',
+        width: 320,
+        scrollbarWidth: 'none',        // buat Firefox
+        msOverflowStyle: 'none',       // buat IE 10+
+      }}
+      className="hide-scrollbar"
+    >
+      <Menu selectable={false}>
+        {notifications.map(item => (
+          <Menu.Item
+            key={item.id}
+            onClick={() => markAsRead(item.id)}
+            className={!item.read ? 'font-semibold bg-blue-50' : '' }
+            style={{ whiteSpace: 'normal', padding: '8px 16px' }}
+          >
+            <div className="text-sm font-medium">{item.title}</div>
+            <div className="text-xs text-gray-500">{item.description}</div>
+            <div className="text-xs text-gray-400 mt-1">{item.time}</div>
+          </Menu.Item>
+        ))}
+      </Menu>
+    </div>
+  );
   
 
   return (
-    <Header className="bg-white px-4 py-0 flex items-center justify-between h-16 shadow-sm">
+    <Header className="bg-white px-4 py-0 flex items-center justify-between h-16 shadow-sm pr-20">
       <Button
         type="text"
         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -119,17 +135,14 @@ const Navbar = ({
         className="!text-gray-500 border-0 hover:bg-gray-100"
       />
       
-      <div className="flex items-center">
-        {/* Search */}
-        <Input 
-          prefix={<SearchOutlined className="text-gray-400" />} 
-          placeholder="Search..." 
-          variant="borderless"
-          className="mr-4 w-64 bg-gray-50 rounded-lg hidden"
-        />
+      <div className="flex items-center h-60 ">
         
         {/* Notifications */}
-        <Dropdown menu={notificationMenu} trigger={['click']} placement="bottomRight">
+        <Dropdown
+          overlay={renderNotificationMenu}  // ini diganti dari menu object ke overlay component
+          trigger={['click']}
+          placement="bottomRight"
+        >
           <Badge count={unreadCount} className="mr-4 cursor-pointer">
             <Button type="text" icon={<BellOutlined />} className="!text-gray-500 hover:bg-gray-100" />
           </Badge>

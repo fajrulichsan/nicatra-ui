@@ -252,12 +252,12 @@ const Register = () => {
       {/* Right side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-purple-600">
         <div className="absolute inset-0 bg-gradient-to-tl from-purple-600/90 to-blue-500/80 z-10" />
-        <img
+        {/* <img
           src="/api/placeholder/1200/800"
           alt="Register Background"
           className="object-cover z-0"
           style={{ width: '100%', height: '100%' }}
-        />
+        /> */}
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white z-20 p-12">
           <div className="max-w-md space-y-6">
             <Title level={1} className="text-white font-bold text-4xl">

@@ -11,7 +11,8 @@ const { Text } = Typography;
 const GensetStationTable = () => {
   const [gensetData, setGensetData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [selectedStation, setSelectedStation] = useState('all');
+  const [stations, setStations] = useState(['All']); // State untuk dropdown station
+  const [selectedStation, setSelectedStation] = useState('All');
   const [loading, setLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,22 +20,26 @@ const GensetStationTable = () => {
 
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-
   const onPageChange = (page, pageSize) => {
     setCurrentPage(page);
     setPageSize(pageSize);
   };
 
+  // Fetch genset data dari API
   const fetchGensetData = () => {
     setLoading(true);
-    // Use axios to get data from your API
     axios.get(`${config.BASE_URL}/genset-monitoring`)
       .then((response) => {
-        console.log('Fetched genset data:', response.data);
-        setGensetData(response.data.data);
-        setFilteredData(response.data.data);
+        const data = response.data.data || [];
+        setGensetData(data);
+        // Filter ulang data sesuai selectedStation setelah fetch ulang
+        if (selectedStation === 'All') {
+          setFilteredData(data);
+        } else {
+          setFilteredData(data.filter(item => item.station === selectedStation));
+        }
       })
-      .catch((error) => {
+      .catch(() => {
         notification.error({
           message: 'Error fetching data',
           description: 'There was an error fetching the generator station data.',
@@ -44,28 +49,36 @@ const GensetStationTable = () => {
         setLoading(false);
       });
   };
-  
-  // Auto refresh data setiap 30 detik
+
+  // Fetch stations dari API /stations
+  const fetchStations = () => {
+    axios.get(`${config.BASE_URL}/stations`)
+      .then((response) => {
+        const stationList = response.data.data || [];
+        // Buat array nama station, tambah 'all' di depan
+        setStations(['all', ...stationList.map(s => s.name || s.station || s)]);
+      })
+      .catch(() => {
+        notification.error({
+          message: 'Error fetching stations',
+          description: 'There was an error fetching the stations list.',
+        });
+      });
+  };
+
+  // Fetch data dan stations saat mount, dan setup interval refresh genset data
   useEffect(() => {
-    // Fetch initial data on mount
+    fetchStations();
     fetchGensetData();
-  
-    // Set interval untuk refresh data setiap 30 detik (30000 ms)
+
     const intervalId = setInterval(() => {
       fetchGensetData();
     }, 30000);
-  
-    // Cleanup interval ketika component unmount
-    return () => {
-      clearInterval(intervalId);
-    };
+
+    return () => clearInterval(intervalId);
   }, []);
 
-
-  // Get unique stations for dropdown
-  const stations = ['all', ...new Set(gensetData.map(item => item.station))];
-
-  // Handle station filter change
+  // Handle filter station dropdown
   const handleStationChange = (value) => {
     setSelectedStation(value);
     if (value === 'all') {
@@ -73,61 +86,53 @@ const GensetStationTable = () => {
     } else {
       setFilteredData(gensetData.filter(item => item.station === value));
     }
+    setCurrentPage(1);
   };
 
-  // Define table columns
+  // Definisi kolom tabel tetap sama
   const gensetColumns = [
     {
       title: 'No',
       key: 'index',
-      render: (_, __, index) => index + 1,  // Menampilkan nomor urut
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,  // nomor urut disesuaikan halaman
     },
     {
       title: 'Station',
-      dataIndex: 'gensetId',
+      dataIndex: 'gensetId', // Asumsi data property nama station adalah 'station'
       key: 'gensetId',
     },
     {
       title: 'Voltage (V)',
       dataIndex: 'voltage',
       key: 'voltage',
-      render: (text) => {
-        return text + " V";
-      }
+      render: (text) => `${text} V`
     },
     {
       title: 'Current (A)',
       dataIndex: 'currentA',
       key: 'currentA',
-      render: (text) => {
-        return text + " A";
-      }
+      render: (text) => `${text} A`
     },
     {
       title: 'Power',
       dataIndex: 'power',
       key: 'power',
-      render: (text) => {
-        return text + " kW";
-      }
+      render: (text) => `${text} kW`
     },
     {
       title: 'Time',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (text) => {
-        return moment(text).format('YYYY-MM-DD HH:mm'); // Format tanggal dan waktu
-      }
+      render: (text) => moment(text).format('YYYY-MM-DD HH:mm')
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (text, record) => {
-        // Menentukan status berdasarkan power
+      render: (_, record) => {
         let status = 'Online';
         let color = 'green';
-    
+
         if (record.power === 0) {
           status = 'Offline';
           color = 'red';
@@ -135,20 +140,15 @@ const GensetStationTable = () => {
           status = 'Warning';
           color = 'orange';
         }
-    
-        return (
-          <Tag color={color}>
-            {status}
-          </Tag>
-        );
+
+        return <Tag color={color}>{status}</Tag>;
       }
     },
   ];
 
+  // Tombol refresh tetap panggil fetch gensetData
   const handleRefresh = () => {
-    setLoading(true);
     fetchGensetData();
-    setLoading(false);
   };
 
   return (
@@ -164,6 +164,7 @@ const GensetStationTable = () => {
               onChange={handleStationChange} 
               style={{ width: 180 }}
               placeholder="Filter by station"
+              loading={stations.length === 1} // Loading saat fetch stations
             >
               {stations.map(station => (
                 <Option key={station} value={station}>
@@ -195,8 +196,9 @@ const GensetStationTable = () => {
           onChange: onPageChange,
           onShowSizeChange: onPageChange,
         }}
-        rowKey="key"
+        rowKey={(record) => record.id || record.key || `${record.station}-${record.createdAt}`}
         scroll={{ x: 1000 }}
+        loading={loading}
       />
     </Card>
   );
