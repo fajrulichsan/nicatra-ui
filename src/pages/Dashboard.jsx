@@ -17,17 +17,19 @@ import GensetPowerCharts from '../components/GensetPowerCharts';
 import GensetVoltageCharts from '../components/GensetVoltageCharts';
 import GensetCurrentCharts from '../components/GensetCurrentCharts';
 import CmsTemplate from '../components/CmsTemplate';
+import { useAppContext } from '../context/AppContext'; 
 
 const { Title, Text } = Typography;
 
 const Dashboard = () => {
+  const {currentUser} = useAppContext(); 
   return (
     <CmsTemplate>
       {/* Title bar */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <Title level={4} className="mb-0">Dashboard</Title>
-          <Text type="secondary">Welcome back</Text>
+          <Text type="secondary">Welcome back, {currentUser.name}</Text>
         </div>
       </div>
       

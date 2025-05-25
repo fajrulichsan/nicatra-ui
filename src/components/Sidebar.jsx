@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Menu } from 'antd';
 import { DashboardOutlined, TeamOutlined } from '@ant-design/icons';
+import { useAppContext } from '../context/AppContext'; // Assuming you have a context to get user data
 
 const { Sider } = Layout;
 
 const Sidebar = ({ collapsed, activeMenu, setActiveMenu }) => {
   const navigate = useNavigate(); // React Router hook for navigation
+  const {currentUser} = useAppContext(); // Assuming you have a context to get user data
 
   const handleMenuClick = (e) => {
     setActiveMenu(e.key);
@@ -35,8 +37,8 @@ const Sidebar = ({ collapsed, activeMenu, setActiveMenu }) => {
         className="border-r-0"
         items={[
           { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-          { key: 'employees', icon: <TeamOutlined />, label: 'Employees' },
-        ]}
+          currentUser.isAdmin && { key: 'employees', icon: <TeamOutlined />, label: 'Employees' },  // Menyembunyikan jika bukan admin
+        ].filter(Boolean)}  
       />
     </Sider>
   );

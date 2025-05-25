@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config/config'; 
 import { checkAuth } from '../utils/Utils';
+import { useAppContext } from '../context/AppContext';
 
 const { Header } = Layout;
 
@@ -25,20 +26,22 @@ const Navbar = ({
 }) => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
+  const { currentUser, setCurrentUser } = useAppContext(); 
+
 
   useEffect(() => {
     checkAuth().then(data => {
       if (!data) {
         navigate('/');
       } else {
-        setUser(data);
-        console.log('User data:', data); // Log the user data
+        setCurrentUser(data);
       }
     });
+
+    console.log('Current User:', currentUser); // Log the current user data
   }, []);
 
-  if (!user) return null; 
+  if (!currentUser) return null; 
   
   const handleLogout = () => {
     axios.post(`${config.BASE_URL}/users/logout`, {}, { withCredentials: true })
@@ -135,10 +138,10 @@ const Navbar = ({
         {/* User profile */}
         <Dropdown menu={userMenu} trigger={['click']} placement="bottomRight">
           <div className="flex items-center cursor-pointer">
-            <Avatar className="bg-blue-500">{getInitials(user.name)}</Avatar>
+            <Avatar className="bg-blue-500">{getInitials(currentUser.name)}</Avatar>
             <div className="ml-2 hidden md:block">
-              <div className="text-sm font-medium">{user.name}</div>
-              <div className="text-xs text-gray-500">{user.isAdmin ? 'Super Admin' : 'Admin'}</div>
+              <div className="text-sm font-medium">{currentUser.name}</div>
+              <div className="text-xs text-gray-500">{currentUser.isAdmin ? 'Super Admin' : 'Admin'}</div>
             </div>
           </div>
         </Dropdown>
