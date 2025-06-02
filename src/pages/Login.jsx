@@ -6,6 +6,9 @@ import axios from 'axios';
 import { checkAuth } from '../utils/Utils';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import kai from '../assets/kai.png'
+import nicatra from '../assets/nicatra.png'
+import power from '../assets/power.png'
 
 const { Title, Text } = Typography;
 
@@ -65,30 +68,51 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Left side - Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-blue-600">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/80 to-purple-600/90 z-10" />
-        {/* <img
-          src="/api/placeholder/1200/800"
-          alt="Login Background"
-          className="absolute inset-0 object-cover w-full h-full z-0"
-        /> */}
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-white z-20 p-12">
-          <div className="max-w-md space-y-6">
-            <Title level={1} className="text-white font-bold text-4xl">
-              Welcome Back!
-            </Title>
-            <Text className="text-white text-lg block">
-              Log in to access your account and continue your journey with us.
-            </Text>
-            <div className="flex items-center space-x-2 mt-8">
-              <div className="h-2 w-2 rounded-full bg-white"></div>
-              <div className="h-2 w-2 rounded-full bg-white/50"></div>
-              <div className="h-2 w-2 rounded-full bg-white/50"></div>
-            </div>
-          </div>
-        </div>
+
+<div className="hidden lg:flex lg:w-1/2 relative bg-blue-600">
+  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/80 to-purple-600/90 z-20" />
+  
+  {/* Logo Section - Positioned at top */}
+  <div className="absolute top-8 left-1/2 transform -translate-x-1/2 flex items-center justify-center space-x-8 z-30">
+    <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center p-2">
+        <img
+          src={kai}
+          alt="Logo 1"
+          className="max-h-full max-w-full object-contain"
+        />
       </div>
+      <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center p-2">
+        <img
+          src={nicatra}
+          alt="Logo 2"
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+      <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center p-2">
+        <img
+          src={power}
+          alt="Logo 3"
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+    </div>
+
+  <div className="absolute inset-0 flex flex-col justify-center items-center text-white z-20 p-12">
+    <div className="max-w-md space-y-6">
+      <Title level={1} className="text-white font-bold text-4xl">
+        Workshop Sintelis Divre IV Tanjungkarang
+      </Title>
+      <Text className="text-white text-lg block">
+        Log in to access your account and continue your journey with us.
+      </Text>
+      <div className="flex items-center space-x-2 mt-8">
+        <div className="h-2 w-2 rounded-full bg-white"></div>
+        <div className="h-2 w-2 rounded-full bg-white/50"></div>
+        <div className="h-2 w-2 rounded-full bg-white/50"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Right side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
